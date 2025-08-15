@@ -1,11 +1,8 @@
 services:
   babyphone:
-    extends:
-       file: ../../bases-configuration/base.yml
-       service: base
     build: .
-    #ports:
-    #  - "20258:5000"
+    ports:
+      - "5000:5000"
     environment:
       - RTSP_URL=${RTSP_URL}
     restart: unless-stopped 
