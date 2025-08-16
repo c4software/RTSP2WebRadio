@@ -171,15 +171,15 @@ class AudioManager:
             
         self._stop_event.clear()
         logging.info("Démarrage du processus FFmpeg...")
+        
         ffmpeg_command = [
             "ffmpeg", "-rtsp_transport", "tcp", "-i", RTSP_URL,
-            "-vn", "-acodec", "libmp3lame", "-b:a", "32k",
-            "-ar", "22050", "-ac", "1", "-f", "mp3",
-            "-af", "aresample=async=1:first_pts=0", "-fflags", "+genpts",
-            "-loglevel", "error", "-reconnect", "1", 
+            "-vn", "-c:a", "copy", "-f", "adts",
+            "-loglevel", "error", "-reconnect", "1",
             "-reconnect_streamed", "1", "-reconnect_delay_max", "2",
             "pipe:1"
         ]
+
         try:
             self._ffmpeg_process = subprocess.Popen(
                 ffmpeg_command, 
@@ -269,8 +269,9 @@ class AudioManager:
 app = Flask(__name__)
 audio_manager = AudioManager()
 
-@app.route('/stream.mp3')
-def stream_mp3():
+@app.route('/stream')
+@app.route('/stream.mp3') # Old route for compatibility
+def stream():
     """Route principale qui gère le streaming pour un client."""
     def generate_audio() -> Generator[bytes, None, None]:
         """Générateur qui lit depuis la file d'attente personnelle du client."""
@@ -296,7 +297,8 @@ def stream_mp3():
             audio_manager.remove_client(client)
             logging.info(f"Fin du streaming pour le client {client.id}.")
 
-    return Response(stream_with_context(generate_audio()), mimetype='audio/mpeg')
+    return Response(stream_with_context(generate_audio()), mimetype='audio/aac')
+
 
 @app.route('/status')
 def status():
